@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
                 _renderer.actionMove(x,y);
                 break;
             case MotionEvent.ACTION_UP:
-                _renderer.actionUp(x,y);
+                _renderer.actionUp(x,_renderer._height - y);
                 break;
         }
         return true;

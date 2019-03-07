@@ -20,6 +20,8 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
     private final int CASTLE_NUMBER = 8;
     private Castle[] castles = new Castle[CASTLE_NUMBER];
 
+    Castle selectedCastle;
+
     //@Override
     //コンストラクタ
     public HyperMotion2D(Context context)
@@ -98,14 +100,17 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
                 spriteText._pos._x = x + sprite._width + 10;
                 spriteText._pos._y = sprite._pos._y;
                 castles[2*i+j] = new Castle(sprite, soldierSprite, spriteText, x, y);
+                castles[2*i+j].soldier.setScore(100);
             }
         }
+        castles[0].setState(Castle.FRIEND_CASTLE);
+        castles[CASTLE_NUMBER - 1].setState(Castle.ENEMY_CASTLE);
 
     }
 
     private void drawCastle(GL10 gl){
         for(Castle castle : castles){
-            castle.draw(gl);
+            castle.draw(gl, _context);
         }
     }
 
@@ -120,7 +125,18 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
     public void actionUp(float x,float y)
     {
         for(Castle castle : castles){
-            if(castle.sprite.hit(x, y)) castle.select();
+            if(castle.sprite.hit(x, y)) {
+                if(selectedCastle == null && castle.getState() == Castle.FRIEND_CASTLE){
+                    castle.select();
+                    selectedCastle = castle;
+                }else if(selectedCastle != castle){
+                    selectedCastle.atack(castle);
+                    selectedCastle.select();
+                    selectedCastle = null;
+                }else{
+                    selectedCastle = null;
+                }
+            }
         }
     }
 }
