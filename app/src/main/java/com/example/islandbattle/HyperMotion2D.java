@@ -12,14 +12,24 @@ import javax.microedition.khronos.opengles.GL10;
 
 public class HyperMotion2D implements GLSurfaceView.Renderer {
 
+
     private Context _context;
     public int _width;
     public int _height;
     public boolean _touch;
 
     private final int CASTLE_NUMBER = 8;
-    private Castle[] castles = new Castle[CASTLE_NUMBER];
+    private City[] cities = new City[CASTLE_NUMBER];
 
+    City selectedCity;
+
+    private Sprite2D moneySprite = new Sprite2D();
+    private float money = 0;
+    private SpriteText moneySpriteText = new SpriteText();
+
+    private Sprite2D wheatSprite = new Sprite2D();
+    public static float wheat = 50;
+    private SpriteText wheatSpriteText = new SpriteText();
     //@Override
     //コンストラクタ
     public HyperMotion2D(Context context)
@@ -36,6 +46,10 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
                 | GL10.GL_DEPTH_BUFFER_BIT);
 
         drawCastle(gl);
+
+        drawMoney(gl);
+        drawWheat(gl);
+        updateUI();
     }
 
     //⑪画面の比率
@@ -75,13 +89,18 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
         for(int i = 0; i < 4; i++){
             for(int j = 0; j < 2; j++){
                 Sprite2D sprite = new Sprite2D();
-                sprite.setTexture(gl, _context.getResources(), R.drawable.castles);
-                int x = (int)(Math.random() * 400) + 400 * j;
-                int y = (int)(Math.random() * 400) + 400 * i;
+                if(2*i+j == 1 || 2*i+j == CASTLE_NUMBER - 2)
+                    sprite.setTexture(gl, _context.getResources(), R.drawable.mines);
+                else if(2*i+j == 2 || 2*i+j == CASTLE_NUMBER - 3)
+                    sprite.setTexture(gl, _context.getResources(), R.drawable.farms);
+                else
+                    sprite.setTexture(gl, _context.getResources(), R.drawable.castles);
+                int x = 100 + (int)(Math.random() * 200) + 400 * j;
+                int y = 100 + (int)(Math.random() * 200) + 400 * i;
                 sprite._pos._x = x;
                 sprite._pos._y = y;
                 sprite._texWidth = 400;
-                sprite._width = 128;
+                sprite._width  = 128;
                 sprite._height = 128;
 
                 Sprite2D soldierSprite = new Sprite2D();
@@ -93,20 +112,89 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
 
                 SpriteText spriteText = new SpriteText();
                 spriteText.setTexture(gl, _context.getResources(),R.drawable.number);
-                spriteText._width = 49;
-                spriteText._texWidth = 49;
-                spriteText._pos._x = x + sprite._width + 10;
+                spriteText._width = Constant.SPRITE_TEXT_WIDTH;
+                spriteText._texWidth = Constant.SPRITE_TEXT_WIDTH;
+                spriteText._pos._x = soldierSprite._pos._x -20;
                 spriteText._pos._y = sprite._pos._y;
-                castles[2*i+j] = new Castle(sprite, soldierSprite, spriteText, x, y);
+
+                if(2*i+j == 1 || 2*i+j == CASTLE_NUMBER - 2)
+                    cities[2*i+j] = new Mine(sprite, soldierSprite, spriteText, x, y);
+                else if(2*i+j == 2 || 2*i+j == CASTLE_NUMBER - 3)
+                    cities[2*i+j] = new Farm(sprite, soldierSprite, spriteText, x, y);
+                else
+                    cities[2*i+j] = new Castle(sprite, soldierSprite, spriteText, x, y);
+                cities[2*i+j].soldier.setCount(50);
             }
         }
+        cities[0].setState(Castle.FRIEND_CASTLE);
+        cities[CASTLE_NUMBER - 1].setState(Castle.ENEMY_CASTLE);
+        cities[0].soldier.setCount(100);
+        cities[CASTLE_NUMBER - 1].soldier.setCount(100);
 
+        moneySprite.setTexture(gl, _context.getResources(), R.drawable.coin);
+        moneySprite._pos._x = 10;
+        moneySprite._pos._y = _height - 100;
+        moneySprite._width  = Constant.UI_SPRITE_WIDTH;
+        moneySprite._height = Constant.UI_SPRITE_WIDTH;
+
+        moneySpriteText.setTexture(gl, _context.getResources(), R.drawable.number);
+        moneySpriteText._pos._x = moneySprite._pos._x + moneySprite._width;
+        moneySpriteText._pos._y = moneySprite._pos._y;
+        moneySpriteText._width = Constant.SPRITE_TEXT_WIDTH;
+        moneySpriteText._texWidth = Constant.SPRITE_TEXT_WIDTH;
+
+        wheatSprite.setTexture(gl, _context.getResources(), R.drawable.wheat);
+        wheatSprite._pos._x = moneySpriteText._pos._x + 100;
+        wheatSprite._pos._y = _height - 100;
+        wheatSprite._width  = Constant.UI_SPRITE_WIDTH;
+        wheatSprite._height = Constant.UI_SPRITE_WIDTH;
+
+        wheatSpriteText.setTexture(gl, _context.getResources(), R.drawable.number);
+        wheatSpriteText._pos._x = wheatSprite._pos._x + wheatSprite._width;
+        wheatSpriteText._pos._y = wheatSprite._pos._y;
+        wheatSpriteText._width = Constant.SPRITE_TEXT_WIDTH;
+        wheatSpriteText._texWidth = Constant.SPRITE_TEXT_WIDTH;
     }
 
     private void drawCastle(GL10 gl){
-        for(Castle castle : castles){
-            castle.draw(gl);
+        for(City city : cities){
+            city.draw(gl, _context);
         }
+    }
+
+    private void drawMoney(GL10 gl){
+        moneySprite.draw(gl);
+        moneySpriteText.draw(gl, (int)money, 0.9f);
+        for(City city : cities){
+            if(city.getState() == City.FRIEND_CASTLE){
+                money += city.addMoney;
+            }
+        }
+    }
+
+    private void drawWheat(GL10 gl){
+        wheatSprite.draw(gl);
+        wheatSpriteText.draw(gl, (int)wheat, 0.9f);
+        for(City city : cities){
+            if(city.getState() == City.FRIEND_CASTLE){
+                wheat += city.addWheat;
+            }
+        }
+    }
+
+    private void updateUI(){
+        wheatSprite._pos._x = moneySpriteText._pos._x +
+                moneySpriteText._width * getNumberOfDigit(money) + 100;
+        wheatSpriteText._pos._x = wheatSprite._pos._x + wheatSprite._width;
+    }
+
+    private int getNumberOfDigit(float n){
+        int i = 1;
+        while(n >= 10){
+            n /= 10;
+            i++;
+        }
+        return i;
     }
 
     public void actionDown(float x,float y)
@@ -119,8 +207,22 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
 
     public void actionUp(float x,float y)
     {
-        for(Castle castle : castles){
-            if(castle.sprite.hit(x, y)) castle.select();
+        for(City city : cities){
+            if(city.sprite.hit(x, y)) {
+                if(selectedCity == null && city.getState() == Castle.FRIEND_CASTLE){
+                    city.select();
+                    selectedCity = city;
+                }else if(selectedCity != null && selectedCity != city){
+                    selectedCity.atack(city);
+                    selectedCity.select();
+                    selectedCity = null;
+                } else if (selectedCity != null && selectedCity == city) {
+                    selectedCity.select();
+                    selectedCity = null;
+                } else {
+                    selectedCity = null;
+                }
+            }
         }
     }
 }
