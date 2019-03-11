@@ -13,7 +13,6 @@ public abstract class City {
     Sprite2D sprite;
     Soldier soldier;
     ArrayList<Soldier> soldiers;
-    private  int x, y;
 
     private int state = EMPTY_CASTLE;
     public static final int EMPTY_CASTLE   = 0;
@@ -30,8 +29,6 @@ public abstract class City {
         this.sprite = sprite;
         soldier = new Soldier(this, soldierSprite, spriteText);
         soldiers = new ArrayList<>();
-        this.x = x;
-        this.y = y;
     }
 
     void draw(GL10 gl, Context context){
@@ -58,7 +55,7 @@ public abstract class City {
             expeditionCount = HyperMotion2D.wheat;
         }
         soldier.setCount(count - expeditionCount);
-        soldiers.add(new Soldier(this, this.x, this.y, city, expeditionCount));
+        soldiers.add(new Soldier(this, sprite._pos._x, sprite._pos._y, city, expeditionCount));
         HyperMotion2D.wheat -= expeditionCount;
     }
 
@@ -66,6 +63,16 @@ public abstract class City {
         this.state = state;
         sprite._texX = 400 * state;
     }
+
+    public void shift(float diffX, float diffY){
+        sprite._pos._x += diffX;
+        sprite._pos._y += diffY;
+        this.soldier.shift(diffX, diffY);
+        for(Soldier soldier :soldiers){
+            soldier.shift(diffX, diffY);
+        }
+    }
+
 
     int getState(){
         return  state;

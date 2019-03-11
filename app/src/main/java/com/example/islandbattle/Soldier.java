@@ -27,7 +27,7 @@ public class Soldier {
         this.count = 0;
     }
 
-    Soldier(City city, int x, int y, City target, float count){
+    Soldier(City city, float x, float y, City target, float count){
         this.ownerCity = city;
         this.x = x;
         this.y = y;
@@ -112,5 +112,14 @@ public class Soldier {
     }
     public boolean isKieru(){
         return isExpedition && isArrived;
+    }
+
+    public void shift(float diffX, float diffY){
+        sprite2D._pos._x += diffX;
+        sprite2D._pos._y += diffY;
+        spriteText._pos._x += diffX;
+        spriteText._pos._y += diffY;
+        x += diffX;
+        y += diffY;
     }
 }
