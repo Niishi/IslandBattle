@@ -81,6 +81,9 @@ public class Soldier {
                 if(count > targetCount){
                     targetCity.soldier.setCount(count - targetCount);
                     targetCity.setState(ownerCity.getState());
+                    if(this.ownerCity.getState() != City.FRIEND_CASTLE){
+                        HyperMotion2D.cpus[this.ownerCity.getState() - 2].cities.add(targetCity);
+                    }
                 }else{
                     targetCity.soldier.setCount(targetCount - count);
                 }
@@ -115,8 +118,10 @@ public class Soldier {
     }
 
     public void shift(float diffX, float diffY){
+        if(sprite2D == null) return;
         sprite2D._pos._x += diffX;
         sprite2D._pos._y += diffY;
+        if(spriteText == null) return;
         spriteText._pos._x += diffX;
         spriteText._pos._y += diffY;
         x += diffX;

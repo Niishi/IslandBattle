@@ -18,10 +18,15 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
     public int _height;
     public boolean _touch;
 
-    private final int CASTLE_NUMBER = 16;
+    private final int CITY_ROW_COUNT = 6;
+    private final int CITY_COLUMN_COUNT = 6;
+    private final int CASTLE_NUMBER = CITY_ROW_COUNT * CITY_COLUMN_COUNT;
     private City[] cities = new City[CASTLE_NUMBER];
 
     City selectedCity;
+
+    private static final int CPU_COUNT = 1;
+    static CPU[] cpus = new CPU[CPU_COUNT];
 
     private Sprite2D moneySprite = new Sprite2D();
     private float money = 0;
@@ -45,9 +50,9 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
                 | GL10.GL_DEPTH_BUFFER_BIT);
 
         drawCastle(gl);
-
         drawMoney(gl);
         drawWheat(gl);
+        cpuTurn();
         updateUI();
     }
 
@@ -83,12 +88,13 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
                 GL10.GL_ONE_MINUS_SRC_ALPHA);
 
 
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 2; j++) {
+        for (int i = 0; i < CITY_ROW_COUNT; i++) {
+            for (int j = 0; j < CITY_COLUMN_COUNT; j++) {
                 Sprite2D sprite = new Sprite2D();
-                if (2 * i + j == 1 || 2 * i + j == CASTLE_NUMBER - 2)
+                int index = CITY_COLUMN_COUNT * i + j;
+                if (index == 1 || index == CASTLE_NUMBER - 2)
                     sprite.setTexture(gl, _context.getResources(), R.drawable.mines);
-                else if (2 * i + j == 2 || 2 * i + j == CASTLE_NUMBER - 3)
+                else if (index == 2 || index == CASTLE_NUMBER - 3)
                     sprite.setTexture(gl, _context.getResources(), R.drawable.farms);
                 else
                     sprite.setTexture(gl, _context.getResources(), R.drawable.castles);
@@ -114,19 +120,21 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
                 spriteText._pos._x = soldierSprite._pos._x - 20;
                 spriteText._pos._y = sprite._pos._y;
 
-                if (2 * i + j == 1 || 2 * i + j == CASTLE_NUMBER - 2)
-                    cities[2 * i + j] = new Mine(sprite, soldierSprite, spriteText, x, y);
-                else if (2 * i + j == 2 || 2 * i + j == CASTLE_NUMBER - 3)
-                    cities[2 * i + j] = new Farm(sprite, soldierSprite, spriteText, x, y);
+                if (index == 1 || index == CASTLE_NUMBER - 2)
+                    cities[index] = new Mine(sprite, soldierSprite, spriteText, x, y);
+                else if (index == 2 || index == CASTLE_NUMBER - 3)
+                    cities[index] = new Farm(sprite, soldierSprite, spriteText, x, y);
                 else
-                    cities[2 * i + j] = new Castle(sprite, soldierSprite, spriteText, x, y);
-                cities[2 * i + j].soldier.setCount(50);
+                    cities[index] = new Castle(sprite, soldierSprite, spriteText, x, y);
+                cities[index].soldier.setCount(50);
             }
         }
         cities[0].setState(Castle.FRIEND_CASTLE);
         cities[CASTLE_NUMBER - 1].setState(Castle.ENEMY_CASTLE);
         cities[0].soldier.setCount(100);
         cities[CASTLE_NUMBER - 1].soldier.setCount(100);
+
+        cpus[0] = new CPU(cities[CASTLE_NUMBER-1], 2);
 
         moneySprite.setTexture(gl, _context.getResources(), R.drawable.coin);
         moneySprite._pos._x = 10;
@@ -163,8 +171,10 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
         moneySprite.draw(gl);
         moneySpriteText.draw(gl, (int) money, 0.9f);
         for (City city : cities) {
-            if (city.getState() == City.FRIEND_CASTLE) {
+            if (city.getState() == City.FRIEND_CASTLE)
                 money += city.addMoney;
+            for(CPU cpu : cpus){
+                if(city.getState() == cpu.id) cpu.money += city.addMoney;
             }
         }
     }
@@ -173,9 +183,17 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
         wheatSprite.draw(gl);
         wheatSpriteText.draw(gl, (int) wheat, 0.9f);
         for (City city : cities) {
-            if (city.getState() == City.FRIEND_CASTLE) {
+            if (city.getState() == City.FRIEND_CASTLE)
                 wheat += city.addWheat;
+            for(CPU cpu : cpus){
+                if(city.getState() == cpu.id) cpu.wheat += city.addWheat;
             }
+        }
+    }
+
+    private void cpuTurn(){
+        for(CPU cpu : cpus){
+            cpu.turn(cities);
         }
     }
 
@@ -197,7 +215,7 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
     public void actionDown(float x, float y) {
     }
 
-    float preX = -1, preY = -1;
+    private float preX = -1, preY = -1;
 
     public void actionMove(float x, float y) {
         if (preX != -1) {
@@ -220,7 +238,7 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
                     city.select();
                     selectedCity = city;
                 } else if (selectedCity != null && selectedCity != city) {
-                    selectedCity.atack(city);
+                    selectedCity.attack(city);
                     selectedCity.select();
                     selectedCity = null;
                 } else if (selectedCity != null && selectedCity == city) {
