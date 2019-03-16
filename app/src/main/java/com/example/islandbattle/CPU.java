@@ -44,14 +44,28 @@ public class CPU {
         for (int i = allCities.length - 1; i >= 0; i--) {
             City city = allCities[i];
             if (city.getState() != id) {
-                if (city.soldier.getCount() < minCount) {
-                    minCount = city.soldier.getCount();
+                float dist = getAverageDistance(city);
+                if (city.soldier.getCount() + dist < minCount) {
+                    minCount = city.soldier.getCount() + dist;
                     minCity = city;
                 }
             }
         }
         return minCity;
     }
+
+    private float getAverageDistance(City target){
+        float result = 0;
+        for(City city : cities){
+            result += (city.sprite._pos._x - target.sprite._pos._x) *
+                    (city.sprite._pos._x - target.sprite._pos._x) +
+                    (city.sprite._pos._y - target.sprite._pos._y) *
+                    (city.sprite._pos._y - target.sprite._pos._y);
+        }
+        result /= cities.size();
+        return result;
+    }
+
 
     private float getTotalSoldierCount() {
         float result = 0;

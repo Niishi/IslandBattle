@@ -35,9 +35,18 @@ public abstract class City {
         sprite.draw(gl);
         soldier.draw(gl, context);
         for (int i = soldiers.size() - 1; i >= 0; i--) {
+            if (soldier.isKieru()) {//敵部隊と接触を受け事前にやられている可能性があるため
+                soldiers.remove(soldier);
+                HyperMotion2D.soldierList.remove(soldier);
+            }
+
             Soldier soldier = soldiers.get(i);
             soldier.draw(gl, context);
-            if (soldier.isKieru()) soldiers.remove(soldier);
+
+            if (soldier.isKieru()) {//上のdraw()の中で部隊がやられた可能性があるため
+                soldiers.remove(soldier);
+                HyperMotion2D.soldierList.remove(soldier);
+            }
         }
     }
 

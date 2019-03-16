@@ -7,6 +7,8 @@ import android.util.Log;
 import com.example.islandbattle.roxiga.hypermotion2d.Sprite2D;
 import com.example.islandbattle.roxiga.hypermotion2d.SpriteText;
 
+import java.util.ArrayList;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -28,6 +30,7 @@ public class HyperMotion2D implements GLSurfaceView.Renderer {
     private static final int CPU_COUNT = 1;
     static CPU[] cpus = new CPU[CPU_COUNT];
 
+    static ArrayList<Soldier> soldierList = new ArrayList<>();
     private Sprite2D moneySprite = new Sprite2D();
     private float money = 0;
     private SpriteText moneySpriteText = new SpriteText();

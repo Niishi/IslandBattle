@@ -18,7 +18,7 @@ public class Soldier {
     private boolean isExpedition = false;
     private boolean isArrived = false;
     private float x, y;
-    private final static int SPEED = 5;
+    private int speed = 5;
 
     Soldier(City city, Sprite2D sprite2D, SpriteText spriteText){
         this.ownerCity = city;
@@ -34,6 +34,7 @@ public class Soldier {
         targetCity = target;
         isExpedition = true;
         this.count = count;
+        HyperMotion2D.soldierList.add(this);
     }
 
     void init(GL10 gl, Context context){
@@ -67,43 +68,73 @@ public class Soldier {
 
     void move(){
         double theta = Math.atan2(targetCity.sprite._pos._y - this.y, targetCity.sprite._pos._x- this.x);
-        this.y += SPEED * Math.sin(theta);
-        this.x += SPEED * Math.cos(theta);
-        this.sprite2D._pos._y += SPEED * Math.sin(theta);
-        this.sprite2D._pos._x += SPEED * Math.cos(theta);
-        this.spriteText._pos._y += SPEED * Math.sin(theta);
-        this.spriteText._pos._x += SPEED * Math.cos(theta);
-        if(Math.abs(this.x - targetCity.sprite._pos._x) <= MARGIN &&
-                Math.abs(this.y - targetCity.sprite._pos._y) <= MARGIN){
-            this.isArrived = true;
-            float targetCount = targetCity.soldier.getCount();
-            if(this.ownerCity.getState() != targetCity.getState()){
-                if(count > targetCount){
-                    targetCity.soldier.setCount(count - targetCount);
-                    targetCity.setState(ownerCity.getState());
-                    if(this.ownerCity.getState() != City.FRIEND_CASTLE){
-                        HyperMotion2D.cpus[this.ownerCity.getState() - 2].cities.add(targetCity);
-                    }
-                }else{
-                    targetCity.soldier.setCount(targetCount - count);
+        this.y += speed * Math.sin(theta);
+        this.x += speed * Math.cos(theta);
+        this.sprite2D._pos._y += speed * Math.sin(theta);
+        this.sprite2D._pos._x += speed * Math.cos(theta);
+        this.spriteText._pos._y += speed * Math.sin(theta);
+        this.spriteText._pos._x += speed * Math.cos(theta);
+        if(hit(targetCity.sprite)){
+            attackTargetCity();
+        }
+        for(Soldier otherSoldier : HyperMotion2D.soldierList){
+            if(this.ownerCity.getState() != otherSoldier.ownerCity.getState()){
+                if(hit(otherSoldier.sprite2D)){
+                    attackSoldier(otherSoldier);
                 }
-            }else{
-                targetCity.soldier.setCount(targetCount + count);
             }
-            this.targetCity = null;
         }
     }
+    private void attackTargetCity(){
+        this.isArrived = true;
+        float targetCount = targetCity.soldier.getCount();
+        if(this.ownerCity.getState() != targetCity.getState()){
+            if(count > targetCount){
+                targetCity.soldier.setCount(count - targetCount);
+                targetCity.setState(ownerCity.getState());
+                if(this.ownerCity.getState() != City.FRIEND_CASTLE){
+                    HyperMotion2D.cpus[this.ownerCity.getState() - 2].cities.add(targetCity);
+                }
+            }else{
+                targetCity.soldier.setCount(targetCount - count);
+            }
+        }else{
+            targetCity.soldier.setCount(targetCount + count);
+        }
+        this.targetCity = null;
+    }
+
+    private void attackSoldier(Soldier otherSoldier){
+        float targetCount = otherSoldier.getCount();
+        if(count > targetCount){
+            otherSoldier.isArrived = true;
+            this.setCount(count - targetCount);
+        }else{
+            this.isArrived = true;
+            otherSoldier.setCount(targetCount - count);
+        }
+    }
+
+    private boolean hit(Sprite2D s){
+        if(s == null) return false;
+        return Math.abs(this.x - s._pos._x) <= MARGIN &&
+                Math.abs(this.y - s._pos._y) <= MARGIN;
+    }
+
 
     private void setSize(){
         if(count > 500){
             sprite2D._width = 128;
             sprite2D._height = 128;
+            speed = 2;
         }else if(count > 100){
             sprite2D._width = 96;
             sprite2D._height = 96;
+            speed = 5;
         }else{
             sprite2D._width = 64;
             sprite2D._height = 64;
+            speed = 8;
         }
     }
 
